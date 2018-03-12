@@ -36,6 +36,7 @@ def str2hdict(st: str) -> dict:
     for line in st.splitlines():
         if line.startswith('HTTP'):
             ret['code'] = [int(s) for s in line.split() if s.isdigit()][0]
+            ret['status'] = line.strip('HTTP/1.1')[1:]
             continue
         ret[line.split(': ')[0]] = line.split(': ')[1].split('\r', 1)[0]
     return ret
@@ -104,6 +105,7 @@ def main(args):
             print(headers)
         if headers['code'] >= 400 or headers['code'] < 300 or args.no_redirect:
             break
+        print(f"Redirecting [{headers['status']}] {args.url} => {headers['Location']}")
         args.url = headers['Location']
 
 if __name__ == "__main__":
