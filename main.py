@@ -3,22 +3,19 @@ import argparse
 import platform
 import socket
 
-"""
-# TODO
-- support gzip
-- probably more
-"""
-
 REQ = "{method} {path} HTTP/1.1\r\nHost: {host}:{port}\r\nConnection: close\r\n{headers}\r\n{data}\r\n"
 
 METHODS = ['GET', 'POST', 'HEAD', 'PUT', 'DELETE', 'OPTIONS', 'CONNECT', 'TRACE']
 SCHEMES = ['http:']
 __version__ = "1.0.1"
-HEADERS = {"User-agent": f"pyhttp/{__version__}", "Accept-Encoding": "deflate", "Accept": "*/*"}
+HEADERS = {"User-agent": f"pyhttp/{__version__}", "Accept": "*/*"}
 
 def stripheaders(da: str, header_only: bool =False) -> [tuple, str]:
     header = da.split('\r\n\r\n', 1)[0]
-    data = da.split('\r\n\r\n', 1)[1]
+    try:
+        data = da.split('\r\n\r\n', 1)[1]
+    except:
+        data = "Unsupported Content-Encoding"
     if header_only:
         return header
     return header, data
@@ -103,7 +100,10 @@ def main(args):
         headers = str2hdict(reqh)
         if args.verbose:
             print(headers)
-        if headers['code'] >= 400 or headers['code'] < 300 or args.no_redirect:
+        try:
+            if headers['code'] >= 400 or headers['code'] < 300 or args.no_redirect:
+                break
+        except KeyError:
             break
         print(f"Redirecting [{headers['status']}] {args.url} => {headers['Location']}")
         args.url = headers['Location']
