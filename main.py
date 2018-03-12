@@ -1,7 +1,7 @@
 #!/bin/env python3
-import socket
 import argparse
 import platform
+import socket
 
 """
 # TODO
@@ -15,20 +15,23 @@ METHODS = ['GET', 'POST', 'HEAD', 'PUT', 'DELETE', 'OPTIONS', 'CONNECT', 'TRACE'
 __version__ = "1.0.1"
 HEADERS = {"User-agent": f"pyhttp/{__version__}", "Accept-Encoding": "deflate", "Accept": "*/*"}
 
-def stripheaders(da : str, header_only : bool =False) -> tuple:
+
+def stripheaders(da: str, header_only: bool =False) -> [tuple, str]:
     header = da.split('\r\n\r\n', 1)[0]
     data = da.split('\r\n\r\n', 1)[1]
     if header_only:
         return header
     return header, data
 
-def hdict2str(dic : dict) -> str:
+
+def hdict2str(dic: dict) -> str:
     ret = ""
     for key, value in dic.items():
         ret += key.title() + ": " + value + "\r\n"
     return ret
 
-def str2hdict(st : str) -> dict:
+
+def str2hdict(st: str) -> dict:
     ret = {}
     for line in st.splitlines():
         if line.startswith('HTTP'):
@@ -37,7 +40,8 @@ def str2hdict(st : str) -> dict:
         ret[line.split(': ')[0]] = line.split(': ')[1].split('\r', 1)[0]
     return ret
 
-def parse_url(url : str) -> tuple:
+
+def parse_url(url: str) -> tuple:
     if not url.startswith('http://'):
         raise ValueError('URL must start with http://')
     scheme, _, host = url.split('/', 2)
@@ -50,15 +54,17 @@ def parse_url(url : str) -> tuple:
     host = host.split(':')[0] if ':' in host else host
     return scheme, host, int(port), path
 
-def handle_headers(args : dict) -> None:
+
+def handle_headers(arg: argparse.Namespace) -> None:
     global HEADERS
-    if args.no_default_headers:
+    if arg.no_default_headers:
         HEADERS = {}
-    if args.headers:
-        for i in args.headers:
+    if arg.headers:
+        for i in arg.headers:
             HEADERS[i.split(':')[0]] = i.split(':')[1]
 
-def read(so : socket.socket) -> str:
+
+def read(so: socket.socket) -> str:
     ret = ""
     pdata = so.recv(1024)
     while pdata:
@@ -69,30 +75,35 @@ def read(so : socket.socket) -> str:
         pdata = so.recv(1024)
     return ret
 
-def request(host : str, port : int, path : str, headers : dict, method : str, data : str) -> tuple:
+
+def request(host: str, port: int, path: str, headers: dict, method: str, data: str) -> tuple:
     if data:
         headers['Content-Type'] = 'text/plain'
         headers['Content-Length'] = str(len(data))
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((host, port))
-    s.sendall(REQ.format(method=method, path=path, host=host, headers=hdict2str(HEADERS), data=data, port=port).encode())
+    s.sendall(REQ.format(method=method, path=path, host=host,
+                         headers=hdict2str(headers), data=data,
+                         port=port).encode())
     rdata = read(s)
     s.close()
     return stripheaders(rdata)
 
-def main(args):
-    scheme, host, port, path = parse_url(args.url)
-    if args.method is None:
-        args.method = "GET"
-    if not args.method.upper() in METHODS:
-        print("WARN: unrecognised method: {}, continuing anyways...".format(args.method.upper()))
-    handle_headers(args)
-    reqh, reqd = request(host, port, path, HEADERS, args.method.upper(), args.data)
+
+def main(arg):
+    scheme, host, port, path = parse_url(arg.url)
+    if arg.method is None:
+        arg.method = "GET"
+    if not arg.method.upper() in METHODS:
+        print("WARN: unrecognised method: {}, continuing anyways...".format(arg.method.upper()))
+    handle_headers(arg)
+    reqh, reqd = request(host, port, path, HEADERS, arg.method.upper(), arg.data)
     print(reqd)
-    if args.verbose:
+    if arg.verbose:
         print(str2hdict(reqh))
 
-if __name__== "__main__":
+
+if __name__ == "__main__":
     parser = argparse.ArgumentParser("pyhttp", description="a non-interactive network retriever, written in Python")
     parser.version = "pyhttp {} ({})".format(__version__, platform.platform())
     parser.add_argument('url', help="URL to work with")
