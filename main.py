@@ -12,8 +12,8 @@ import platform
 REQ = "{method} {path} HTTP/1.1\r\nHost: {host}:{port}\r\nConnection: close\r\n{headers}\r\n{data}\r\n"
 
 METHODS = ['GET', 'POST', 'HEAD', 'PUT', 'DELETE', 'OPTIONS', 'CONNECT', 'TRACE']
-VERSION = "1.0.1"
-HEADERS = {"User-agent":f"pyhttp/{VERSION}", "Accept-Encoding": "deflate", "Accept": "*/*"}
+__version__ = "1.0.1"
+HEADERS = {"User-agent": f"pyhttp/{__version__}", "Accept-Encoding": "deflate", "Accept": "*/*"}
 
 def stripheaders(da : str, header_only : bool =False) -> tuple:
     header = da.split('\r\n\r\n', 1)[0]
@@ -94,7 +94,7 @@ def main(args):
 
 if __name__== "__main__":
     parser = argparse.ArgumentParser("pyhttp", description="a non-interactive network retriever, written in Python")
-    parser.version = "pyhttp {} ({})".format(VERSION, platform.platform())
+    parser.version = "pyhttp {} ({})".format(__version__, platform.platform())
     parser.add_argument('url', help="URL to work with")
     parser.add_argument('-V', '--verbose', help="Make the operation more talkative", action="store_true")
     parser.add_argument('-v', '--version', help="Show the version number and quit", action="version")
