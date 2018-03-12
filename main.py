@@ -12,8 +12,8 @@ import platform
 REQ = "{method} {path} HTTP/1.1\r\nHost: {host}:{port}\r\nConnection: close\r\n{headers}\r\n{data}\r\n"
 
 METHODS = ['GET', 'POST', 'HEAD', 'PUT', 'DELETE', 'OPTIONS', 'CONNECT', 'TRACE']
-HEADERS = {"User-agent":"pyhttp", "Accept-Encoding": "deflate", "Accept": "*/*"}
-VERSION = "1.0.0"
+VERSION = "1.0.1"
+HEADERS = {"User-agent":f"pyhttp/{VERSION}", "Accept-Encoding": "deflate", "Accept": "*/*"}
 
 def stripheaders(da, header_only=False):
     header = da.split('\r\n\r\n', 1)[0]
