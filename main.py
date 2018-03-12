@@ -12,9 +12,9 @@ import socket
 REQ = "{method} {path} HTTP/1.1\r\nHost: {host}:{port}\r\nConnection: close\r\n{headers}\r\n{data}\r\n"
 
 METHODS = ['GET', 'POST', 'HEAD', 'PUT', 'DELETE', 'OPTIONS', 'CONNECT', 'TRACE']
+SCHEMES = ['http:']
 __version__ = "1.0.1"
 HEADERS = {"User-agent": f"pyhttp/{__version__}", "Accept-Encoding": "deflate", "Accept": "*/*"}
-
 
 def stripheaders(da: str, header_only: bool =False) -> [tuple, str]:
     header = da.split('\r\n\r\n', 1)[0]
@@ -42,8 +42,6 @@ def str2hdict(st: str) -> dict:
 
 
 def parse_url(url: str) -> tuple:
-    if not url.startswith('http://'):
-        raise ValueError('URL must start with http://')
     scheme, _, host = url.split('/', 2)
     if '/' in host:
         path = '/' + host.split('/', 1)[1]
@@ -92,6 +90,8 @@ def request(host: str, port: int, path: str, headers: dict, method: str, data: s
 def main(args):
     while True:
         scheme, host, port, path = parse_url(args.url)
+        if not scheme in SCHEMES:
+            raise ValueError(f"Scheme {scheme} is not supported")
         if args.method is None:
             args.method = "GET"
         if not args.method.upper() in METHODS:
