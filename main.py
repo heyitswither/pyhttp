@@ -81,16 +81,21 @@ def request(host, port, path, headers, method, data):
     return stripheaders(rdata)
 
 def main(args):
-    scheme, host, port, path = parse_url(args.url)
-    if args.method is None:
-        args.method = "GET"
-    if not args.method.upper() in METHODS:
-        print("WARN: unrecognised method: {}, continuing anyways...".format(args.method.upper()))
-    handle_headers(args)
-    reqh, reqd = request(host, port, path, HEADERS, args.method.upper(), args.data)
-    print(reqd)
-    if args.verbose:
-        print(str2hdict(reqh))
+    while True:
+        scheme, host, port, path = parse_url(args.url)
+        if args.method is None:
+            args.method = "GET"
+        if not args.method.upper() in METHODS:
+            print("WARN: unrecognised method: {}, continuing anyways...".format(args.method.upper()))
+        handle_headers(args)
+        reqh, reqd = request(host, port, path, HEADERS, args.method.upper(), args.data)
+        print(reqd)
+        headers = str2hdict(reqh)
+        if args.verbose:
+            print(headers)
+        if headers['code'] >= 400 or headers['code'] < 300 or not args.redirect:
+            break
+        args.url = headers['Location']
 
 if __name__== "__main__":
     parser = argparse.ArgumentParser("pyhttp", description="a non-interactive network retriever, written in Python")
@@ -101,6 +106,7 @@ if __name__== "__main__":
     parser.add_argument('-M', '--method', help="Method used for HTTP request")
     parser.add_argument('-D', '--data', help="Data to send in request", default="")
     parser.add_argument('-H', '--headers', help="Send custom headers", default=[], nargs='*')
+    parser.add_argument('-R', '--redirect', help="Follow redirects", action="store_true")
     parser.add_argument('--no-default-headers', help="Only send custom headers", action="store_true")
     args = parser.parse_args()
     main(args)
