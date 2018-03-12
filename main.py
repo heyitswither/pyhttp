@@ -15,20 +15,20 @@ METHODS = ['GET', 'POST', 'HEAD', 'PUT', 'DELETE', 'OPTIONS', 'CONNECT', 'TRACE'
 VERSION = "1.0.1"
 HEADERS = {"User-agent":f"pyhttp/{VERSION}", "Accept-Encoding": "deflate", "Accept": "*/*"}
 
-def stripheaders(da, header_only=False):
+def stripheaders(da : str, header_only : bool =False) -> tuple:
     header = da.split('\r\n\r\n', 1)[0]
     data = da.split('\r\n\r\n', 1)[1]
     if header_only:
         return header
     return header, data
 
-def hdict2str(dic):
+def hdict2str(dic : dict) -> str:
     ret = ""
     for key, value in dic.items():
         ret += key.title() + ": " + value + "\r\n"
     return ret
 
-def str2hdict(st):
+def str2hdict(st : str) -> dict:
     ret = {}
     for line in st.splitlines():
         if line.startswith('HTTP'):
@@ -37,7 +37,7 @@ def str2hdict(st):
         ret[line.split(': ')[0]] = line.split(': ')[1].split('\r', 1)[0]
     return ret
 
-def parse_url(url):
+def parse_url(url : str) -> tuple:
     if not url.startswith('http://'):
         raise ValueError('URL must start with http://')
     scheme, _, host = url.split('/', 2)
@@ -50,7 +50,7 @@ def parse_url(url):
     host = host.split(':')[0] if ':' in host else host
     return scheme, host, int(port), path
 
-def handle_headers(args):
+def handle_headers(args : dict) -> None:
     global HEADERS
     if args.no_default_headers:
         HEADERS = {}
@@ -58,7 +58,7 @@ def handle_headers(args):
         for i in args.headers:
             HEADERS[i.split(':')[0]] = i.split(':')[1]
 
-def read(so):
+def read(so : socket.socket) -> str:
     ret = ""
     pdata = so.recv(1024)
     while pdata:
@@ -69,7 +69,7 @@ def read(so):
         pdata = so.recv(1024)
     return ret
 
-def request(host, port, path, headers, method, data):
+def request(host : str, port : int, path : str, headers : dict, method : str, data : str) -> tuple:
     if data:
         headers['Content-Type'] = 'text/plain'
         headers['Content-Length'] = str(len(data))
