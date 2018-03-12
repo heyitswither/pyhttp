@@ -102,7 +102,7 @@ def main(args):
         headers = str2hdict(reqh)
         if args.verbose:
             print(headers)
-        if headers['code'] >= 400 or headers['code'] < 300 or not args.redirect:
+        if headers['code'] >= 400 or headers['code'] < 300 or args.no_redirect:
             break
         args.url = headers['Location']
 
@@ -115,7 +115,7 @@ if __name__ == "__main__":
     parser.add_argument('-M', '--method', help="Method used for HTTP request")
     parser.add_argument('-D', '--data', help="Data to send in request", default="")
     parser.add_argument('-H', '--headers', help="Send custom headers", default=[], nargs='*')
-    parser.add_argument('-R', '--redirect', help="Follow redirects", action="store_true")
+    parser.add_argument('-R', '--no-redirect', help="Don't ollow redirects", action="store_true")
     parser.add_argument('--no-default-headers', help="Only send custom headers", action="store_true")
     args = parser.parse_args()
     main(args)
