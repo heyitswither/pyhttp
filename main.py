@@ -2,22 +2,25 @@
 import argparse
 import platform
 import socket
+import ssl
 
+from errors import *
+
+context = ssl.SSLContext(ssl.PROTOCOL_TLS)
+
+__version__ = "2.0.0"
 REQ = "{method} {path} HTTP/1.1\r\nHost: {host}:{port}\r\nConnection: close\r\n{headers}\r\n{data}\r\n"
-
+SCHEMES = ['http:', 'https:']
 METHODS = ['GET', 'POST', 'HEAD', 'PUT', 'DELETE', 'OPTIONS', 'CONNECT', 'TRACE']
-SCHEMES = ['http:']
-__version__ = "1.0.1"
-HEADERS = {"User-agent": f"pyhttp/{__version__}", "Accept": "*/*"}
+HEADERS = {'User-Agent': f'pyhttp/{__version__}', 'Allow': '*/*'}
 
-def stripheaders(da: str, header_only: bool =False) -> [tuple, str]:
+
+def stripheaders(da: str) -> [tuple, str]:
     header = da.split('\r\n\r\n', 1)[0]
     try:
         data = da.split('\r\n\r\n', 1)[1]
     except:
         data = "Unsupported Content-Encoding"
-    if header_only:
-        return header
     return header, data
 
 
@@ -41,12 +44,13 @@ def str2hdict(st: str) -> dict:
 
 def parse_url(url: str) -> tuple:
     scheme, _, host = url.split('/', 2)
+
     if '/' in host:
         path = '/' + host.split('/', 1)[1]
     else:
         path = '/'
     host = host.split('/')[0]
-    port = host.split(':')[1] if ':' in host else '80'
+    port = int(host.split(':')[1]) if ':' in host else 80 if scheme == 'http:' else 443 if scheme == 'https:' else 0
     host = host.split(':')[0] if ':' in host else host
     return scheme, host, int(port), path
 
@@ -72,11 +76,14 @@ def read(so: socket.socket) -> str:
     return ret
 
 
-def request(host: str, port: int, path: str, headers: dict, method: str, data: str) -> tuple:
+def request(host: str, port: int, path: str, headers: dict, method: str, data: str, scheme: str) -> tuple:
     if data:
         headers['Content-Type'] = 'text/plain'
         headers['Content-Length'] = str(len(data))
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    if scheme == 'https:':
+        s = context.wrap_socket(s, server_hostname=host)
+
     s.connect((host, port))
     s.sendall(REQ.format(method=method, path=path, host=host,
                          headers=hdict2str(headers), data=data,
@@ -89,13 +96,13 @@ def main(args):
     while True:
         scheme, host, port, path = parse_url(args.url)
         if not scheme in SCHEMES:
-            raise ValueError(f"Scheme {scheme} is not supported")
+            raise InvalidScheme(f"Scheme {scheme} is not supported")
         if args.method is None:
             args.method = "GET"
         if not args.method.upper() in METHODS:
             print("WARN: unrecognised method: {}, continuing anyways...".format(args.method.upper()))
         handle_headers(args)
-        reqh, reqd = request(host, port, path, HEADERS, args.method.upper(), args.data)
+        reqh, reqd = request(host, port, path, HEADERS, args.method.upper(), args.data, scheme)
         print(reqd)
         headers = str2hdict(reqh)
         if args.verbose:
