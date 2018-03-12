@@ -1,5 +1,4 @@
 #!/bin/env python3
-
 import argparse
 from enum import Enum
 import platform
@@ -21,16 +20,18 @@ class Scheme(Enum):
 - probably more
 """
 
+
 REQ = "{method} {path} HTTP/1.1\r\nHost: {host}:{port}\r\nConnection: close\r\n{headers}\r\n{data}\r\n"
 
 METHODS = ['GET', 'POST', 'HEAD', 'PUT', 'DELETE', 'OPTIONS', 'CONNECT', 'TRACE']
-__version__ = "1.0.1"
-HEADERS = {"User-agent": f"pyhttp/{__version__}", "Accept-Encoding": "deflate", "Accept": "*/*"}
 
 
 def stripheaders(da: str, header_only: bool =False) -> [tuple, str]:
     header = da.split('\r\n\r\n', 1)[0]
-    data = da.split('\r\n\r\n', 1)[1]
+    try:
+        data = da.split('\r\n\r\n', 1)[1]
+    except:
+        data = "Unsupported Content-Encoding"
     if header_only:
         return header
     return header, data
@@ -48,6 +49,7 @@ def str2hdict(st: str) -> dict:
     for line in st.splitlines():
         if line.startswith('HTTP'):
             ret['code'] = [int(s) for s in line.split() if s.isdigit()][0]
+            ret['status'] = line.strip('HTTP/1.1')[1:]
             continue
         ret[line.split(': ')[0]] = line.split(': ')[1].split('\r', 1)[0]
     return ret
@@ -113,6 +115,8 @@ def request(host: str, port: int, path: str, headers: dict, method: str, data: s
 def main(args):
     while True:
         scheme, host, port, path = parse_url(args.url)
+        if not scheme in SCHEMES:
+            raise ValueError(f"Scheme {scheme} is not supported")
         if args.method is None:
             args.method = "GET"
         if not args.method.upper() in METHODS:
@@ -127,8 +131,12 @@ def main(args):
         headers = str2hdict(reqh)
         if args.verbose:
             print(headers)
-        if headers['code'] >= 400 or headers['code'] < 300 or not args.redirect:
+        try:
+            if headers['code'] >= 400 or headers['code'] < 300 or args.no_redirect:
+                break
+        except KeyError:
             break
+        print(f"Redirecting [{headers['status']}] {args.url} => {headers['Location']}")
         args.url = headers['Location']
 
 if __name__ == "__main__":
@@ -140,7 +148,7 @@ if __name__ == "__main__":
     parser.add_argument('-M', '--method', help="Method used for HTTP request")
     parser.add_argument('-D', '--data', help="Data to send in request", default="")
     parser.add_argument('-H', '--headers', help="Send custom headers", default=[], nargs='*')
-    parser.add_argument('-R', '--redirect', help="Follow redirects", action="store_true")
+    parser.add_argument('-R', '--no-redirect', help="Don't ollow redirects", action="store_true")
     parser.add_argument('--no-default-headers', help="Only send custom headers", action="store_true")
     args = parser.parse_args()
     main(args)
