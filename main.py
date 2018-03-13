@@ -3,6 +3,7 @@ import argparse
 import platform
 import socket
 import ssl
+import base64
 
 from errors import *
 
@@ -62,6 +63,8 @@ def handle_headers(arg: argparse.Namespace) -> None:
     if arg.headers:
         for i in arg.headers:
             HEADERS[i.split(':')[0]] = i.split(':')[1]
+    if arg.auth:
+        HEADERS['Authorization'] = (arg.auth.split('/')[0].encode() + " ".encode() + base64.encodestring(arg.auth.split('/')[1].encode()).strip()).decode()
 
 
 def read(so: socket.socket) -> str:
@@ -125,6 +128,7 @@ if __name__ == "__main__":
     parser.add_argument('-D', '--data', help="Data to send in request", default="")
     parser.add_argument('-H', '--headers', help="Send custom headers", default=[], nargs='*')
     parser.add_argument('-R', '--no-redirect', help="Don't ollow redirects", action="store_true")
+    parser.add_argument('-A', '--auth', help="Authenticate with the server(Type/User:Pass)")
     parser.add_argument('--no-default-headers', help="Only send custom headers", action="store_true")
     args = parser.parse_args()
     main(args)
