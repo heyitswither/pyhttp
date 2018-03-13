@@ -1,9 +1,10 @@
 # pyhttp
-simple http client written in python
+a non-interactive network retriever, written in Python
 
 ```
 usage: pyhttp [-h] [-V] [-v] [-M METHOD] [-D DATA]
-              [-H [HEADERS [HEADERS ...]]] [-R] [--no-default-headers]
+              [-H [HEADERS [HEADERS ...]]] [-R] [-A AUTH]
+              [--no-default-headers]
               url
 
 a non-interactive network retriever, written in Python
@@ -21,5 +22,7 @@ optional arguments:
   -H [HEADERS [HEADERS ...]], --headers [HEADERS [HEADERS ...]]
                         Send custom headers
   -R, --no-redirect     Don't ollow redirects
+  -A AUTH, --auth AUTH  Authenticate with the server(Type/User:Pass)
   --no-default-headers  Only send custom headers
+
 ```
