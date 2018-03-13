@@ -26,10 +26,7 @@ def stripheaders(da: str) -> [tuple, str]:
 
 
 def hdict2str(dic: dict) -> str:
-    ret = ""
-    for key, value in dic.items():
-        ret += key.title() + ": " + value + "\r\n"
-    return ret
+    return ''.join('{}:{}\r\n'.format(k.title(), v) for k, v in d.items())
 
 
 def str2hdict(st: str) -> dict:
