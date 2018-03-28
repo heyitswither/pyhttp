@@ -4,6 +4,7 @@ import platform
 import socket
 import ssl
 import base64
+import json
 
 from errors import *
 
@@ -41,7 +42,10 @@ def str2hdict(st: str) -> dict:
 
 
 def parse_url(url: str) -> tuple:
-    scheme, _, host = url.split('/', 2)
+    try:
+        scheme, _, host = url.split('/', 2)
+    except ValueError:
+        raise InvalidURI(url)
 
     if '/' in host:
         path = '/' + host.split('/', 1)[1]
@@ -103,10 +107,21 @@ def main(args):
             print("WARN: unrecognised method: {}, continuing anyways...".format(args.method.upper()))
         handle_headers(args)
         reqh, reqd = request(host, port, path, HEADERS, args.method.upper(), args.data, scheme)
-        print(reqd)
         headers = str2hdict(reqh)
-        if args.verbose:
-            print(headers)
+        if args.verbose and args.markers:
+            print("-------BEGIN HEADERS-------")
+        if args.verbose and not args.json:
+            print(reqh)
+        if args.verbose and args.json:
+            print(json.dumps(headers))
+        if args.verbose and args.markers:
+            print("--------END HEADERS--------")
+        if not (args.verbose and args.no_data):
+            if args.verbose and args.markers:
+                print("-------BEGIN DATA-------")
+            print(reqd[:-1])
+            if args.verbose and args.markers:
+                print("--------END DATA--------")
         try:
             if headers['code'] >= 400 or headers['code'] < 300 or args.no_redirect:
                 break
@@ -120,11 +135,14 @@ if __name__ == "__main__":
     parser.version = "pyhttp {} ({})".format(__version__, platform.platform())
     parser.add_argument('url', help="URL to work with")
     parser.add_argument('-V', '--verbose', help="Make the operation more talkative", action="store_true")
+    parser.add_argument('-j', '--json', help="Headers as JSON (-V)", action="store_true")
+    parser.add_argument('-n', '--no-data', help="Don't print data (-V)", action="store_true")
+    parser.add_argument('-m', '--markers', help="Add markers to the output (-V)", action="store_true")
     parser.add_argument('-v', '--version', help="Show the version number and quit", action="version")
     parser.add_argument('-M', '--method', help="Method used for HTTP request")
     parser.add_argument('-D', '--data', help="Data to send in request", default="")
     parser.add_argument('-H', '--headers', help="Send custom headers", default=[], nargs='*')
-    parser.add_argument('-R', '--no-redirect', help="Don't ollow redirects", action="store_true")
+    parser.add_argument('-R', '--no-redirect', help="Don't allow redirects", action="store_true")
     parser.add_argument('-A', '--auth', help="Authenticate with the server(Type/User:Pass)")
     parser.add_argument('--no-default-headers', help="Only send custom headers", action="store_true")
     args = parser.parse_args()
