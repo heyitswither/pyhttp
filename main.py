@@ -1,4 +1,4 @@
-#!/bin/env python3
+#!/usr/bin/env python3
 import argparse
 import platform
 import socket
@@ -52,9 +52,10 @@ def parse_url(url: str) -> tuple:
     else:
         path = '/'
     host = host.split('/')[0]
-    port = int(host.split(':')[1]) if ':' in host else 80 if scheme == 'http:' else 443 if scheme == 'https:' else 0
+    tport = host[::-1].split(':', 1)[0]
+    port = int(tport) if ':' in host and tport else 80 if scheme == 'http:' else 443 if scheme == 'https:' else 0
     host = host.split(':')[0] if ':' in host else host
-    return scheme, host, int(port), path
+    return scheme, host, port, path
 
 
 def handle_headers(arg: argparse.Namespace) -> None:
@@ -84,7 +85,10 @@ def request(host: str, port: int, path: str, headers: dict, method: str, data: s
     if data:
         headers['Content-Type'] = 'text/plain'
         headers['Content-Length'] = str(len(data))
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    if ':' in host:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    else:
+        s = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
     if scheme == 'https:':
         s = context.wrap_socket(s, server_hostname=host)
 
