@@ -82,8 +82,9 @@ def read(so: socket.socket) -> str:
 
 
 def request(host: str, port: int, path: str, headers: dict, method: str, data: str, scheme: str) -> tuple:
-    if data:
+    if data and not 'Content-Type' in headers:
         headers['Content-Type'] = 'text/plain'
+    if data and not 'Content-Length' in headers:
         headers['Content-Length'] = str(len(data))
     if ':' in host:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -105,10 +106,10 @@ def main(args):
         scheme, host, port, path = parse_url(args.url)
         if not scheme in SCHEMES:
             raise InvalidScheme(f"Scheme {scheme} is not supported")
-        if args.method is None:
-            args.method = "GET"
         if not args.method.upper() in METHODS:
             print("WARN: unrecognised method: {}, continuing anyways...".format(args.method.upper()))
+        if args.verbose:
+            print("{} {} {} {} {}".format(args.method, scheme, host, port, path))
         handle_headers(args)
         reqh, reqd = request(host, port, path, HEADERS, args.method.upper(), args.data, scheme)
         headers = str2hdict(reqh)
@@ -143,7 +144,7 @@ if __name__ == "__main__":
     parser.add_argument('-n', '--no-data', help="Don't print data (-V)", action="store_true")
     parser.add_argument('-m', '--markers', help="Add markers to the output (-V)", action="store_true")
     parser.add_argument('-v', '--version', help="Show the version number and quit", action="version")
-    parser.add_argument('-M', '--method', help="Method used for HTTP request")
+    parser.add_argument('-M', '--method', help="Method used for HTTP request", default="GET")
     parser.add_argument('-D', '--data', help="Data to send in request", default="")
     parser.add_argument('-H', '--headers', help="Send custom headers", default=[], nargs='*')
     parser.add_argument('-R', '--no-redirect', help="Don't allow redirects", action="store_true")
