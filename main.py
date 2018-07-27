@@ -14,7 +14,7 @@ __version__ = "2.0.0"
 REQ = "{method} {path} HTTP/1.1\r\nHost: {host}:{port}\r\nConnection: close\r\n{headers}\r\n{data}\r\n"
 SCHEMES = ['http:', 'https:']
 METHODS = ['GET', 'POST', 'HEAD', 'PUT', 'DELETE', 'OPTIONS', 'CONNECT', 'TRACE']
-HEADERS = {'User-Agent': f'pyhttp/{__version__}', 'Allow': '*/*'}
+HEADERS = {'User-Agent': f'pyhttp/{__version__} ({platform.system()}/{platform.release()}, {platform.python_implementation()}/{platform.python_version()})', 'Allow': '*/*'}
 
 
 def stripheaders(da: str) -> [tuple, str]:
